@@ -2,7 +2,7 @@ const mineflayer = require('mineflayer');
 
 const config = {
   host: process.env.MC_HOST || 'spookycraft.play.hosting',
-  port: parseInt(process.env.MC_PORT || '25565', 10),
+  port: parseInt(process.env.MC_PORT || '25874', 10),
   username: process.env.MC_USERNAME || 'SpookyBot',
   version: process.env.MC_VERSION || false, // false = automatisch erkennen
 };
