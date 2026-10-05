@@ -1,16 +1,11 @@
 const mineflayer = require('mineflayer');
 
 const config = {
-  host: process.env.MC_HOST,
+  host: process.env.MC_HOST || 'spookycraft.play.hosting',
   port: parseInt(process.env.MC_PORT || '25565', 10),
   username: process.env.MC_USERNAME || 'SpookyBot',
   version: process.env.MC_VERSION || false, // false = automatisch erkennen
 };
-
-if (!config.host) {
-  console.error('MC_HOST fehlt! Setze die Variable in Railway.');
-  process.exit(1);
-}
 
 function startBot() {
   console.log(`Verbinde zu ${config.host}:${config.port} ...`);
@@ -24,6 +19,11 @@ function startBot() {
       bot.setControlState('jump', true);
       setTimeout(() => bot.setControlState('jump', false), 500);
     }, 30000);
+  });
+
+  // Resource-Pack des Servers automatisch annehmen
+  bot.on('resourcePack', () => {
+    bot.acceptResourcePack();
   });
 
   bot.on('kicked', (reason) => console.log('Gekickt:', reason));
