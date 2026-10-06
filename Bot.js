@@ -1,47 +1,36 @@
 const mineflayer = require('mineflayer');
 
-// Verhindert, dass der Bot bei unerwarteten Fehlern abstürzt
-process.on('uncaughtException', (err) => {
-  console.log('Unerwarteter Fehler:', err.message);
-});
-process.on('unhandledRejection', (err) => {
-  console.log('Unerwarteter Fehler:', err && err.message ? err.message : err);
-});
-
-const config = {
-  host: process.env.MC_HOST || 'spookycraft.play.hosting',
-  port: parseInt(process.env.MC_PORT || '25565', 10),
-  username: process.env.MC_USERNAME || 'SpookyBot',
-  auth: 'offline',
-  version: process.env.MC_VERSION || false, // false = automatisch erkennen
-};
+process.on('uncaughtException', (err) => console.log('Fehler:', err.message));
+process.on('unhandledRejection', (err) => console.log('Fehler:', err));
 
 function startBot() {
-  console.log(`Verbinde zu ${config.host}:${config.port} ...`);
-  const bot = mineflayer.createBot(config);
+  console.log('Verbinde zu spookycraft.play.hosting ...');
+
+  const bot = mineflayer.createBot({
+    host: 'spookycraft.play.hosting',
+    port: 25565,
+    username: 'SpookyBot',
+    auth: 'offline',
+  });
+
   let jumpTimer;
 
   bot.once('spawn', () => {
     console.log('Bot ist auf dem Server.');
-    // Alle 30 Sekunden kurz springen (Anti-AFK)
     jumpTimer = setInterval(() => {
       bot.setControlState('jump', true);
-      setTimeout(() => bot.setControlState('jump', false), 500);
-    }, 30000);
+      setTimeout(() => bot.setControlState('jump', false), 300);
+    }, 5000);
   });
 
-  // Resource-Pack des Servers automatisch annehmen
-  bot.on('resourcePack', () => {
-    bot.acceptResourcePack();
-  });
-
+  bot.on('resourcePack', () => bot.acceptResourcePack());
   bot.on('kicked', (reason) => console.log('Gekickt:', reason));
   bot.on('error', (err) => console.log('Fehler:', err.message));
 
-  bot.on('end', (reason) => {
+  bot.on('end', () => {
     clearInterval(jumpTimer);
-    console.log(`Getrennt (${reason}). Neuer Versuch in 15 Sekunden.`);
-    setTimeout(startBot, 15000);
+    console.log('Getrennt. Neuer Versuch in 10 Sekunden.');
+    setTimeout(startBot, 10000);
   });
 }
 
