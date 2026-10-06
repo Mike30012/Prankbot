@@ -1,10 +1,12 @@
 const mineflayer = require('mineflayer');
+const dns = require('dns');
 
 process.on('uncaughtException', (err) => console.log('Fehler:', err.message));
 process.on('unhandledRejection', (err) => console.log('Fehler:', err));
 
 const HOST = process.env.MC_HOST || 'spookycraft.play.hosting';
-const PORT = process.env.MC_PORT ? parseInt(process.env.MC_PORT, 10) : 25980;
+// 25565 = Standard: der echte Port wird automatisch über die Domain gefunden
+const PORT = process.env.MC_PORT ? parseInt(process.env.MC_PORT, 10) : 25565;
 
 function startBot() {
   console.log(`Verbinde zu ${HOST}:${PORT} ...`);
@@ -14,27 +16,23 @@ function startBot() {
     port: PORT,
     username: 'SpookyBot',
     auth: 'offline',
-    version: '1.21.11',
   });
 
   let moveTimer;
 
   const watchdog = setTimeout(() => {
-    console.log('Kein Spawn nach 45 Sekunden, starte neu.');
+    console.log('Kein Spawn nach 150 Sekunden, starte neu.');
     bot.end();
-  }, 45000);
+  }, 150000);
 
   bot.once('spawn', () => {
     clearTimeout(watchdog);
     console.log('Bot ist auf dem Server.');
 
     moveTimer = setInterval(() => {
-      // Kopf drehen
       bot.look(Math.random() * Math.PI * 2, (Math.random() - 0.5) * 0.6, true);
-      // Springen
       bot.setControlState('jump', true);
       setTimeout(() => bot.setControlState('jump', false), 300);
-      // Kurz vor und wieder zurück
       bot.setControlState('forward', true);
       setTimeout(() => {
         bot.setControlState('forward', false);
@@ -56,4 +54,7 @@ function startBot() {
   });
 }
 
-startBot();
+dns.resolveSrv(`_minecraft._tcp.${HOST}`, (err, records) => {
+  console.log('SRV:', err ? 'keiner (' + err.code + ')' : JSON.stringify(records));
+  startBot();
+});
