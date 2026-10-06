@@ -3,12 +3,15 @@ const mineflayer = require('mineflayer');
 process.on('uncaughtException', (err) => console.log('Fehler:', err.message));
 process.on('unhandledRejection', (err) => console.log('Fehler:', err));
 
+const HOST = process.env.MC_HOST || 'spookycraft.play.hosting';
+const PORT = process.env.MC_PORT ? parseInt(process.env.MC_PORT, 10) : undefined;
+
 function startBot() {
-  console.log('Verbinde zu spookycraft.play.hosting:25681 ...');
+  console.log(`Verbinde zu ${HOST}${PORT ? ':' + PORT : ' (Port automatisch)'} ...`);
 
   const bot = mineflayer.createBot({
-    host: 'spookycraft.play.hosting',
-    port: 25681,
+    host: HOST,
+    port: PORT,
     username: 'SpookyBot',
     auth: 'offline',
   });
