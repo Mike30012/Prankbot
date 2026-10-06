@@ -1,5 +1,13 @@
 const mineflayer = require('mineflayer');
 
+// Verhindert, dass der Bot bei unerwarteten Fehlern abstürzt
+process.on('uncaughtException', (err) => {
+  console.log('Unerwarteter Fehler:', err.message);
+});
+process.on('unhandledRejection', (err) => {
+  console.log('Unerwarteter Fehler:', err && err.message ? err.message : err);
+});
+
 const config = {
   host: process.env.MC_HOST || 'spookycraft.play.hosting',
   port: parseInt(process.env.MC_PORT || '25565', 10),
