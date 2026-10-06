@@ -4,11 +4,11 @@ process.on('uncaughtException', (err) => console.log('Fehler:', err.message));
 process.on('unhandledRejection', (err) => console.log('Fehler:', err));
 
 function startBot() {
-  console.log('Verbinde zu spookycraft.play.hosting ...');
+  console.log('Verbinde zu spookycraft.play.hosting:25681 ...');
 
   const bot = mineflayer.createBot({
     host: 'spookycraft.play.hosting',
-    port: 25565,
+    port: 25681,
     username: 'SpookyBot',
     auth: 'offline',
   });
