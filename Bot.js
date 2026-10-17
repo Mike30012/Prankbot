@@ -5,7 +5,6 @@ process.on('uncaughtException', (err) => console.log('Fehler:', err.message));
 process.on('unhandledRejection', (err) => console.log('Fehler:', err));
 
 const HOST = process.env.MC_HOST || 'spookycraft.play.hosting';
-// 25565 = Standard: der echte Port wird automatisch über die Domain gefunden
 const PORT = process.env.MC_PORT ? parseInt(process.env.MC_PORT, 10) : 25565;
 
 function startBot() {
@@ -19,6 +18,22 @@ function startBot() {
   });
 
   let moveTimer;
+
+  // Resource-Pack: Anfrage direkt beantworten (akzeptiert, heruntergeladen, geladen)
+  bot._client.on('add_resource_pack', (packet) => {
+    console.log('Resource-Pack angefragt, bestätige ...');
+    const uuid = packet.uuid;
+    const send = (result) => {
+      try {
+        bot._client.write('resource_pack_receive', { uuid, result });
+      } catch (e) {
+        console.log('Pack-Antwort fehlgeschlagen:', e.message);
+      }
+    };
+    send(3); // akzeptiert
+    setTimeout(() => send(4), 300); // heruntergeladen
+    setTimeout(() => send(0), 600); // erfolgreich geladen
+  });
 
   const watchdog = setTimeout(() => {
     console.log('Kein Spawn nach 150 Sekunden, starte neu.');
@@ -42,7 +57,6 @@ function startBot() {
     }, 5000);
   });
 
-  bot.on('resourcePack', () => bot.acceptResourcePack());
   bot.on('kicked', (reason) => console.log('Gekickt:', JSON.stringify(reason)));
   bot.on('error', (err) => console.log('Fehler:', err.message));
 
