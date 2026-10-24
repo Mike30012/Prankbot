@@ -8,7 +8,7 @@ const HOST = process.env.MC_HOST || 'spookycraft.play.hosting';
 const PORT = process.env.MC_PORT ? parseInt(process.env.MC_PORT, 10) : 25565;
 
 function startBot() {
-  console.log(Verbinde zu ${HOST}:${PORT} ...);
+  console.log(`Verbinde zu ${HOST}:${PORT} ...`);
 
   const bot = mineflayer.createBot({
     host: HOST,
@@ -68,7 +68,7 @@ function startBot() {
   });
 }
 
-dns.resolveSrv(_minecraft._tcp.${HOST}, (err, records) => {
+dns.resolveSrv(`_minecraft._tcp.${HOST}`, (err, records) => {
   console.log('SRV:', err ? 'keiner (' + err.code + ')' : JSON.stringify(records));
   startBot();
-}); seid
+});
