@@ -7,7 +7,12 @@ process.on('unhandledRejection', (err) => console.log('Fehler:', err));
 const HOST = process.env.MC_HOST || 'spookycraft.play.hosting';
 const PORT = process.env.MC_PORT ? parseInt(process.env.MC_PORT, 10) : 25565;
 
+let wait = 10000;
+let running = false; // verhindert, dass zwei Bots im selben Prozess laufen
+
 function startBot() {
+  if (running) return;
+  running = true;
   console.log(`Verbinde zu ${HOST}:${PORT} ...`);
 
   const bot = mineflayer.createBot({
@@ -18,8 +23,10 @@ function startBot() {
   });
 
   let moveTimer;
+  let joinedAt = 0;
+  let stopped = false;
 
-  // Resource-Pack: Anfrage direkt beantworten (akzeptiert, heruntergeladen, geladen)
+  // Resource-Pack direkt beantworten
   bot._client.on('add_resource_pack', (packet) => {
     console.log('Resource-Pack angefragt, bestätige ...');
     const uuid = packet.uuid;
@@ -30,41 +37,56 @@ function startBot() {
         console.log('Pack-Antwort fehlgeschlagen:', e.message);
       }
     };
-    send(3); // akzeptiert
-    setTimeout(() => send(4), 300); // heruntergeladen
-    setTimeout(() => send(0), 600); // erfolgreich geladen
+    send(3);
+    setTimeout(() => send(4), 300);
+    setTimeout(() => send(0), 600);
   });
+
+  bot.on('login', () => console.log('Login ok'));
 
   const watchdog = setTimeout(() => {
     console.log('Kein Spawn nach 150 Sekunden, starte neu.');
     bot.end();
   }, 150000);
 
-  bot.once('spawn', () => {
-    clearTimeout(watchdog);
-    console.log('Bot ist auf dem Server.');
-
-    moveTimer = setInterval(() => {
-      bot.look(Math.random() * Math.PI * 2, (Math.random() - 0.5) * 0.6, true);
+  function moveLoop() {
+    if (stopped) return;
+    try {
+      const dirs = ['forward', 'back', 'left', 'right'];
+      const dir = dirs[Math.floor(Math.random() * dirs.length)];
+      bot.look(Math.random() * Math.PI * 2, (Math.random() - 0.5) * 0.8, true);
+      bot.setControlState(dir, true);
       bot.setControlState('jump', true);
       setTimeout(() => bot.setControlState('jump', false), 300);
-      bot.setControlState('forward', true);
-      setTimeout(() => {
-        bot.setControlState('forward', false);
-        bot.setControlState('back', true);
-        setTimeout(() => bot.setControlState('back', false), 400);
-      }, 400);
-    }, 5000);
+      bot.swingArm('right');
+      setTimeout(() => bot.setControlState(dir, false), 400 + Math.random() * 500);
+    } catch (e) {
+      console.log('Bewegung fehlgeschlagen:', e.message);
+    }
+    moveTimer = setTimeout(moveLoop, 4000 + Math.random() * 4000);
+  }
+
+  bot.once('spawn', () => {
+    clearTimeout(watchdog);
+    joinedAt = Date.now();
+    console.log('Bot ist auf dem Server.');
+    moveLoop();
   });
 
   bot.on('kicked', (reason) => console.log('Gekickt:', JSON.stringify(reason)));
   bot.on('error', (err) => console.log('Fehler:', err.message));
 
-  bot.on('end', () => {
+  bot.on('end', (reason) => {
+    stopped = true;
     clearTimeout(watchdog);
-    clearInterval(moveTimer);
-    console.log('Getrennt. Neuer Versuch in 10 Sekunden.');
-    setTimeout(startBot, 10000);
+    clearTimeout(moveTimer);
+    const secs = joinedAt ? Math.round((Date.now() - joinedAt) / 1000) : 0;
+    console.log(`Getrennt: ${reason} | Zeit auf dem Server: ${secs} Sekunden`);
+    if (secs > 60) wait = 10000;
+    console.log(`Neuer Versuch in ${Math.round(wait / 1000)} Sekunden.`);
+    running = false;
+    setTimeout(startBot, wait);
+    wait = Math.min(wait * 2, 60000);
   });
 }
 
